@@ -25,7 +25,7 @@ export class AppComponent implements OnInit {
       //console.log(data.Major)
       d3.select("body")
       .selectAll("p")
-      .data(  [data.Major]  ).append("p")
+      .data(  [data.Name]  ).append("p")
       .text(function(d) { return d; });
     });
 

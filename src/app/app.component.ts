@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import * as d3 from "d3";
 import $ from "jquery";
+import { attachEmbeddedView } from '@angular/core/src/view';
+//import { all } from 'q';
 
 declare var require: any;
 var data = require('../../src/allData.json');
@@ -16,31 +18,106 @@ export class AppComponent implements OnInit {
 
   ngOnInit(){
     var buttonClicked = false;
+    /*
     var canvas2 = d3.select(".chartArrange")
       .append("svg")
       .attr("width", "400")
       .attr("height", "300")
-      .style("background-color", "green");
+      .style("background-color", "green");*/
 
     this.rearange = () => {
       buttonClicked = !buttonClicked;
-      
-
+      var colors = ["#CC0000", "#FF8000", "#FFFF00", "#00FF00", "#00FFFF", "#0080FF", "#0000FF", "#6600CC", "#FF007F", "#404040"]
+      var groupAvr = []
       if (buttonClicked){
-        allC._groups[0].forEach(circle => {
-          finalGroup.forEach(function (value, i) {
+        finalGroup.forEach(function (value, i) {
+          var tempAvr = 0;
           value.forEach(participant => {
-            if (participant[1].Name == circle.id){
-              //console.log( participant[1].Name, " AND ", circle.id, " and ", i, circle)
-              var colors = ["#CC0000", "#FF8000", "#FFFF00", "#00FF00", "#00FFFF", "#0080FF", "#0000FF", "#6600CC", "#FF007F", "#404040"]
-              d3.select(circle)
-                .transition()
-                .duration(1000)
-                .attr("fill", colors[i])
-                .attr("class", "group"+i)
-              }
-            });
+            d3.select("#" + participant[1].Name.replace(/\s/g, ''))
+            //.data(participant[0])            
+              .transition()
+              .duration(1000)
+              .attr("class", "group"+i)
+            tempAvr = tempAvr + participant[0];
           });
+          groupAvr.push(tempAvr/value.length)
+        });
+
+        groupAvr.forEach(function (value, i) {
+          var groupX = i * 140 + 60,
+          groupY = 150;
+          d3.selectAll(".group"+i)
+            .attr("fill", colors[i])
+            .transition()
+            .delay(800)
+            .duration(800)
+            .ease(d3.easeElasticInOut.period(1.5))
+            .attr("cx", groupX)
+            .attr("cy", groupY)
+
+            canvas.append("circle")
+            .attr("id", "group"+i)
+            .attr("class", "circleGroup")
+            //.data(value)
+            .transition()
+            .delay(1600)
+            .duration(800)
+            .attr("cx", groupX)
+            .attr("cy", groupY)
+            .attr("r", function() { return value*10})//value*10)
+            .attr("fill", colors[i])
+
+          d3.selectAll(".circleGroup")
+            .on('mouseover',function() {
+              d3.selectAll(".toremove")
+                .remove();
+              currentCol = d3.select(this).style('fill')
+              var darkerCol = d3.rgb(currentCol).darker(2)
+              d3.select(this)
+                .transition()
+                .duration(500)
+                .attr("fill", darkerCol.toString());
+
+              var groupNumber =parseInt($(this).attr('id').slice(-1))+1
+
+              var groupAvrSkill = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+              finalGroup[groupNumber-1].forEach(function(value, i) {
+                var participant = value;
+                groupAvrSkill = [groupAvrSkill[0] + parseInt(participant[1].VisualisationSkill), groupAvrSkill[1]+parseInt(participant[1].StatisticalSkill) , groupAvrSkill[2]+parseInt(participant[1].MathematicsSkill), groupAvrSkill[3]+parseInt(participant[1].ArtisticSkill), groupAvrSkill[4]+parseInt(participant[1].ComputerSkill), groupAvrSkill[5]+parseInt(participant[1].ProgrammingSkill) , groupAvrSkill[6]+parseInt(participant[1].GraphicsSkill) , groupAvrSkill[7]+ parseInt(participant[1].InteractionSkill) , groupAvrSkill[8]+parseInt(participant[1].EvaluationSkill) , groupAvrSkill[9]+parseInt(participant[1].CommunicationSkill) , groupAvrSkill[10]+parseInt(participant[1].CollaborationSkill), groupAvrSkill[11]+parseInt(participant[1].RepositorySkill)]
+              });
+
+              groupAvrSkill.forEach(function(value, i) {
+                console.log("I ", i)
+                groupAvrSkill[i] = parseFloat((groupAvrSkill[i]/finalGroup[groupNumber-1].length).toFixed(1));  
+              });
+              //console.log(groupAvrSkill[1])
+
+              d3.select(".skillHeader")
+              .text("Group " + groupNumber + "'s average skills")
+              
+              var testing = d3.selectAll(".datahere")
+                .append("div")
+                  .attr("class", "toremove")
+                  .data(groupAvrSkill)
+                  .style("height", function(d) { return  d*20 + "px"; })
+                  .style("width", "100%")
+                  .style("background-color", "blue")
+                  .text(function( d) { return   d; })
+                  .style("color", "white")
+                  .style("vertical-align", "baseline")
+                  .style("padding-right", "1em");
+                
+            })
+          .on('mouseout',function() {
+            d3.select(this)
+              .transition()
+              .duration(50)
+              .attr("fill", currentCol)
+            charts.select("h2")
+                .text("Skills")
+          })
+           
+            
         });
       }else{
         var circles = canvas.selectAll("circle")
@@ -48,16 +125,6 @@ export class AppComponent implements OnInit {
           .duration(1000)
           .attr("fill", "red")
       }   
-      d3.selectAll(".group0")
-        .transition()
-        .duration(500)
-        .attr("cx", function (d, i) {
-          console.log("HEREEE ",d)
-          return i * 50 + 1000;
-        })
-        .attr("cy", 100)
-
-        
     } 
     //var data1 = [9, 8, 15, 16, 23, 42,100, 5];
 
@@ -66,17 +133,15 @@ export class AppComponent implements OnInit {
     
     var timestamp = useData[0].Major
     //console.log("Json data : ", useData);    
-    var averageList =[]; 
     var avrList =[];
     useData.forEach(data => {
-      averageList.push(((parseInt(data.VisualisationSkill)+parseInt(data.StatisticalSkill)+parseInt(data.MathematicsSkill)+parseInt(data.ArtisticSkill)+parseInt(data.ComputerSkill)+parseInt(data.ProgrammingSkill)+parseInt(data.GraphicsSkill)+parseInt(data.InteractionSkill)+parseInt(data.EvaluationSkill)+parseInt(data.CommunicationSkill)+parseInt(data.CollaborationSkill)+parseInt(data.RepositorySkill))/12))
       avrList.push([((parseInt(data.VisualisationSkill)+parseInt(data.StatisticalSkill)+parseInt(data.MathematicsSkill)+parseInt(data.ArtisticSkill)+parseInt(data.ComputerSkill)+parseInt(data.ProgrammingSkill)+parseInt(data.GraphicsSkill)+parseInt(data.InteractionSkill)+parseInt(data.EvaluationSkill)+parseInt(data.CommunicationSkill)+parseInt(data.CollaborationSkill)+parseInt(data.RepositorySkill))/12), data])
     });
     var sortedAvr = avrList.sort(function(a, b){ ;return a[0] - b[0]});
 
-    var groupTemp=[], finalGroup =[]
+    var groupSize = 6    
+    var groupTemp = [], finalGroup = []
     var pushed = 0;
-    var groupSize = 6
     var flag = true
     var modul = Object.keys(useData).length % 10;
 
@@ -116,21 +181,25 @@ export class AppComponent implements OnInit {
       //.style("background-color", "red" )
       //.text(function(i) { return i })
       finalGroup.forEach(function (value, i) {        
-        value.forEach(data => {
+        value.forEach(dataObj => {
+
         
-        var oldValue = data[0]
+        var oldValue = dataObj[0]
         var NewValue = (((oldValue - oldMin) * NewRange) / OldRange) + newMin;
         if (50*posW >= width) {
           posW = 1;
           posH++;
         }
         if (50*posW < width) {
+          //console.log(NewValue)
           canvas.append("circle")
+            //.data(NewValue)
             .attr("cx", 50 * posW)
             .attr("cy", 80 * posH)
             .attr("r", NewValue)
             .attr("class", "group"+i)
-            .attr("id", function(d) { return data[1].Name; })
+            .text(function(d) { return dataObj[1].Name })
+            .attr("id", function(d) { return dataObj[1].Name.replace(/\s/g, ''); })
             .on('mouseover',function() {
               d3.selectAll(".toremove")
                 .remove();
@@ -138,13 +207,13 @@ export class AppComponent implements OnInit {
               var darkerCol = d3.rgb(currentCol).darker(2)
               d3.select(this)
                 .transition()
-                .duration(100)
+                .duration(50)
                 .attr("fill", darkerCol.toString());
               
               useData.forEach(element => {
-                if (element.Name == this.id) {
+                if (element.Name.replace(/\s/g, '') == this.id) {
                   d3.select(".skillHeader")
-                    .text(this.id + "'s skills")
+                    .text(element.Name + "'s skills")
 
                   var testing = d3.selectAll(".datahere")
                   .append("div")
@@ -163,7 +232,7 @@ export class AppComponent implements OnInit {
           .on('mouseout',function() {
             d3.select(this)
               .transition()
-              .duration(300)
+              .duration(50)
               .attr("fill", currentCol)
             charts.select("h2")
                 .text("Skills")
@@ -180,7 +249,6 @@ export class AppComponent implements OnInit {
     var circles = canvas.selectAll("circle")
       .attr("fill", "red")
 
-  //console.log("list ", finalGroup)
-  var allC = canvas.selectAll("circle")
+    var allC = canvas.selectAll("circle")
   }
 }

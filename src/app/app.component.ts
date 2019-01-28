@@ -29,12 +29,7 @@ export class AppComponent implements OnInit {
       .style("background-color", "green");*/
 
     this.rearange = () => {
-      var x = document.getElementById("avrButton")
-      if (buttonClicked) {
-        x.innerHTML = "Average";
-      } else {
-        x.innerHTML = "None";
-      }
+      
 
       buttonClicked = !buttonClicked;
 
@@ -183,6 +178,15 @@ export class AppComponent implements OnInit {
          
       })
     }
+    var x = document.getElementById("avrButton")
+    var hideHobby = document.getElementById("hobby")
+      if (buttonClicked) {
+        x.innerHTML = "None";
+        hideHobby.style.display = "none";
+      } else {
+        x.innerHTML = "Average";
+        hideHobby.style.display = "block";
+      }
   }
         //var data1 = [9, 8, 15, 16, 23, 42,100, 5];
 
@@ -257,6 +261,7 @@ export class AppComponent implements OnInit {
             .text(function(d) { return dataObj[1].Name })
             .attr("id", function(d) { return dataObj[1].Name.replace(/\s/g, ''); })
             .on('mouseover',function() {
+
               d3.selectAll(".toremove")
                 .remove();
               currentCol = d3.select(this).style('fill')
@@ -269,6 +274,9 @@ export class AppComponent implements OnInit {
               useData.forEach(element => {
                 
                 if (element.Name.replace(/\s/g, '') == this.id) {
+                  d3.select(".hobbies")
+                    .text(element.Hobbies)
+
                   d3.select(".skillHeader")
                     .text(element.Name + "'s skills (average of "+ parseFloat(dataObj[0]).toFixed(2) + " )")
 

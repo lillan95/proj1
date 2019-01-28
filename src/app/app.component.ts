@@ -122,13 +122,8 @@ export class AppComponent implements OnInit {
                   }
                 });
                 averageGroup = averageGroup + participant[0]
-                
-                
-                
               });
               averageGroup = (averageGroup/finalGroup[groupNumber-1].length)
-              console.log(averageGroup)
-              
 
               groupAvrSkill.forEach(function(value, i) {
                 groupAvrSkill[i] = parseFloat((groupAvrSkill[i]/finalGroup[groupNumber-1].length).toFixed(1));  
@@ -236,7 +231,7 @@ export class AppComponent implements OnInit {
       .append("svg")
       .attr("width", window.outerWidth)
       .attr("height", height)
-      .style("background-color", "#ffebee");
+      //.style("background-color", "#ffebee");
 
       d3.selectAll(".label")
       .text(function(i,d) { return skillList[d] })

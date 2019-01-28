@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import * as d3 from "d3";
 import $ from "jquery";
 import { attachEmbeddedView } from '@angular/core/src/view';
+//import { posix } from 'path';
 //import { all } from 'q';
 
 declare var require: any;
@@ -18,6 +19,8 @@ export class AppComponent implements OnInit {
 
   ngOnInit(){
     var buttonClicked = false;
+    var groupTemp = [], finalGroup = []
+    
     /*
     var canvas2 = d3.select(".chartArrange")
       .append("svg")
@@ -26,7 +29,15 @@ export class AppComponent implements OnInit {
       .style("background-color", "green");*/
 
     this.rearange = () => {
+      var x = document.getElementById("avrButton")
+      if (buttonClicked) {
+        x.innerHTML = "Average";
+      } else {
+        x.innerHTML = "None";
+      }
+
       buttonClicked = !buttonClicked;
+
       var colors = ["#CC0000", "#FF8000", "#FFFF00", "#00FF00", "#00FFFF", "#0080FF", "#0000FF", "#6600CC", "#FF007F", "#404040"]
       var groupAvr = []
       if (buttonClicked){
@@ -55,7 +66,7 @@ export class AppComponent implements OnInit {
             .attr("cx", groupX)
             .attr("cy", groupY)
 
-            canvas.append("circle")
+          canvas.append("circle")
             .attr("id", "group"+i)
             .attr("class", "circleGroup")
             //.data(value)
@@ -71,6 +82,17 @@ export class AppComponent implements OnInit {
             .on('mouseover',function() {
               d3.selectAll(".toremove")
                 .remove();
+              groupAvr.forEach(function (value, i) {
+                var groupX = i * 140 + 60,
+                groupY = 150;
+                d3.selectAll(".group"+i)
+                  .attr("fill", colors[i])
+                  .transition()
+                  .duration(800)
+                  .ease(d3.easeElasticInOut.period(1.5))
+                  .attr("cx", groupX)
+                  .attr("cy", groupY)
+              });
               currentCol = d3.select(this).style('fill')
               var darkerCol = d3.rgb(currentCol).darker(2)
               d3.select(this)
@@ -78,22 +100,42 @@ export class AppComponent implements OnInit {
                 .duration(500)
                 .attr("fill", darkerCol.toString());
 
-              var groupNumber =parseInt($(this).attr('id').slice(-1))+1
+              var groupNumber = parseInt($(this).attr('id').slice(-1))+1
 
               var groupAvrSkill = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+              var averageGroup = 0;
+
               finalGroup[groupNumber-1].forEach(function(value, i) {
+                var temp = i
                 var participant = value;
                 groupAvrSkill = [groupAvrSkill[0] + parseInt(participant[1].VisualisationSkill), groupAvrSkill[1]+parseInt(participant[1].StatisticalSkill) , groupAvrSkill[2]+parseInt(participant[1].MathematicsSkill), groupAvrSkill[3]+parseInt(participant[1].ArtisticSkill), groupAvrSkill[4]+parseInt(participant[1].ComputerSkill), groupAvrSkill[5]+parseInt(participant[1].ProgrammingSkill) , groupAvrSkill[6]+parseInt(participant[1].GraphicsSkill) , groupAvrSkill[7]+ parseInt(participant[1].InteractionSkill) , groupAvrSkill[8]+parseInt(participant[1].EvaluationSkill) , groupAvrSkill[9]+parseInt(participant[1].CommunicationSkill) , groupAvrSkill[10]+parseInt(participant[1].CollaborationSkill), groupAvrSkill[11]+parseInt(participant[1].RepositorySkill)]
+                value.forEach(function(value) {
+                  if (value.Name){
+                    var groupInd = value.Name.replace(/\s/g, '')
+                    var startPosX = (groupNumber * 100 + temp*100 )
+
+                    d3.select("#"+groupInd)
+                      .transition()
+                      .attr("cx", startPosX)
+                      .duration(800)
+                      .attr("cy", 260)
+                  }
+                });
+                averageGroup = averageGroup + participant[0]
+                
+                
+                
               });
+              averageGroup = (averageGroup/finalGroup[groupNumber-1].length)
+              console.log(averageGroup)
+              
 
               groupAvrSkill.forEach(function(value, i) {
-                console.log("I ", i)
                 groupAvrSkill[i] = parseFloat((groupAvrSkill[i]/finalGroup[groupNumber-1].length).toFixed(1));  
               });
-              //console.log(groupAvrSkill[1])
 
               d3.select(".skillHeader")
-              .text("Group " + groupNumber + "'s average skills")
+              .text("Group " + groupNumber + "'s average skills (Average " + averageGroup.toFixed(2) + ")" )
               
               var testing = d3.selectAll(".datahere")
                 .append("div")
@@ -106,7 +148,6 @@ export class AppComponent implements OnInit {
                   .style("color", "white")
                   .style("vertical-align", "baseline")
                   .style("padding-right", "1em");
-                
             })
           .on('mouseout',function() {
             d3.select(this)
@@ -115,18 +156,40 @@ export class AppComponent implements OnInit {
               .attr("fill", currentCol)
             charts.select("h2")
                 .text("Skills")
-          })
-           
-            
+          })            
         });
       }else{
-        var circles = canvas.selectAll("circle")
+        d3.selectAll(".circleGroup")
+          .remove()
+
+        posW = 1;
+        posH = 1;
+        finalGroup.forEach(function (value, i) {        
+          value.forEach(dataObj => {         
+            if (50*posW >= width) {
+              posW = 1;
+              posH++;
+            }
+            if (50*posW < width) {
+              canvas.select("#"+dataObj[1].Name.replace(/\s/g, ''))
+                .transition()
+                .duration(1000)
+                .attr("cx", function() {  return 60 * posW  })
+                .attr("cy", 80 * posH)
+                .attr("fill", "red")
+                posW++;
+            }
+            
+        /*var circles = canvas.selectAll("circle")
           .transition()
           .duration(1000)
-          .attr("fill", "red")
-      }   
-    } 
-    //var data1 = [9, 8, 15, 16, 23, 42,100, 5];
+          .attr("fill", "red")*/
+        })
+         
+      })
+    }
+  }
+        //var data1 = [9, 8, 15, 16, 23, 42,100, 5];
 
     var useData = data.Responses;
     var totalLen = Object.keys(useData).length;
@@ -140,7 +203,6 @@ export class AppComponent implements OnInit {
     var sortedAvr = avrList.sort(function(a, b){ ;return a[0] - b[0]});
 
     var groupSize = 6    
-    var groupTemp = [], finalGroup = []
     var pushed = 0;
     var flag = true
     var modul = Object.keys(useData).length % 10;
@@ -191,12 +253,11 @@ export class AppComponent implements OnInit {
           posH++;
         }
         if (50*posW < width) {
-          //console.log(NewValue)
           canvas.append("circle")
-            //.data(NewValue)
-            .attr("cx", 50 * posW)
+            .attr("cx", 60 * posW)
             .attr("cy", 80 * posH)
             .attr("r", NewValue)
+            .attr("fill", "red")
             .attr("class", "group"+i)
             .text(function(d) { return dataObj[1].Name })
             .attr("id", function(d) { return dataObj[1].Name.replace(/\s/g, ''); })
@@ -211,9 +272,10 @@ export class AppComponent implements OnInit {
                 .attr("fill", darkerCol.toString());
               
               useData.forEach(element => {
+                
                 if (element.Name.replace(/\s/g, '') == this.id) {
                   d3.select(".skillHeader")
-                    .text(element.Name + "'s skills")
+                    .text(element.Name + "'s skills (average of "+ parseFloat(dataObj[0]).toFixed(2) + " )")
 
                   var testing = d3.selectAll(".datahere")
                   .append("div")
@@ -229,6 +291,7 @@ export class AppComponent implements OnInit {
                 } 
               });
             })
+            
           .on('mouseout',function() {
             d3.select(this)
               .transition()
@@ -237,17 +300,25 @@ export class AppComponent implements OnInit {
             charts.select("h2")
                 .text("Skills")
           })
+          canvas.select("#"+dataObj[1].Name.replace(/\s/g, '')).append("text")
+            .attr("dx", posW)
+            .attr("dy", posH+10)         
+            .attr("text-anchor","middle")
+            .attr("fill", "black")
+            .text("HALLO")
           posW++;
-        }
+        }  
       });
     })
+    
+    console.log(canvas.selectAll("text"))
     var charts = d3.select(".chart")
       .append("h2")
         .attr("class", "skillHeader")
         .text("Skills")
 
-    var circles = canvas.selectAll("circle")
-      .attr("fill", "red")
+    /*var circles = canvas.selectAll("circle")
+      .attr("fill", "red")*/
 
     var allC = canvas.selectAll("circle")
   }
